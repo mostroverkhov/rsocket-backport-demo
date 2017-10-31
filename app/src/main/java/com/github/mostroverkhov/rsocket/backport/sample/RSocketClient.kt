@@ -47,17 +47,5 @@ class RSocketClient(protocol: String,
                 })
         return rSocket.firstOrError()
     }
-
-    companion object {
-        private var instance: RSocketClient? = null
-        operator fun invoke(responder: (RSocket) -> RSocket): RSocketClient {
-            return synchronized(this) {
-                if (instance == null) {
-                    instance = RSocketClient("http", "192.168.1.101", 8082, responder)
-                }
-                instance!!
-            }
-        }
-    }
 }
 
