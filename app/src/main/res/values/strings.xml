@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">rsocket-java-backport-sample</string>
+    <string name="action_settings">Settings</string>
+    <string name="request_response">Request-response</string>
+    <string name="request_stream">request-stream</string>
+    <string name="fire_and_forget">fire and forget</string>
+    <string name="metadata_push">metadata push</string>
+</resources>
