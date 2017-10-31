@@ -10,9 +10,9 @@ import android.widget.TextView
 /**
  * Created by Maksym Ostroverkhov on 30.10.17.
  */
-class ReplyAdapter(private val c: Context,
-                   private val replies: List<String>) : RecyclerView.Adapter<Holder>() {
-
+class ReplyAdapter(private val c: Context) : RecyclerView.Adapter<Holder>() {
+    private val replies: MutableList<String> = mutableListOf()
+    private var recycler: RecyclerView? = null
     override fun onBindViewHolder(holder: Holder, position: Int) {
         holder.reply_text.text = replies[position]
     }
@@ -22,6 +22,18 @@ class ReplyAdapter(private val c: Context,
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
         val root = LayoutInflater.from(c).inflate(R.layout.reply_item, parent, false)
         return Holder(root)
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView?) {
+        recycler = recyclerView
+    }
+
+    fun newReply(reply: String) {
+        replies += reply
+        notifyDataSetChanged()
+        recycler?.post {
+            recycler?.smoothScrollToPosition(replies.lastIndex)
+        }
     }
 }
 

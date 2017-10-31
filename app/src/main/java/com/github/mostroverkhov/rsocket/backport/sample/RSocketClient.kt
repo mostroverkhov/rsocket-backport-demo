@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Created by Maksym Ostroverkhov
  */
-class ClientFactory(protocol: String,
+class RSocketClient(protocol: String,
                     host: String,
                     port: Int,
                     responder: (RSocket) -> RSocket) {
@@ -49,11 +49,11 @@ class ClientFactory(protocol: String,
     }
 
     companion object {
-        private var instance: ClientFactory? = null
-        operator fun invoke(responder: (RSocket) -> RSocket): ClientFactory {
+        private var instance: RSocketClient? = null
+        operator fun invoke(responder: (RSocket) -> RSocket): RSocketClient {
             return synchronized(this) {
                 if (instance == null) {
-                    instance = ClientFactory("http", "192.168.1.101", 8082, responder)
+                    instance = RSocketClient("http", "192.168.1.101", 8082, responder)
                 }
                 instance!!
             }
