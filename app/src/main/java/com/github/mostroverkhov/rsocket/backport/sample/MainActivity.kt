@@ -57,14 +57,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun Flowable<Any>.then(f: (RSocket) -> Flowable<Payload>): Disposable {
-        return flatMap { _ -> rsocket.flatMapPublisher { f(it) } }
+        return flatMap { _ -> rsocket.flatMapPublisher { f(it) }
+                .doOnError { repo.onError(it) }.onErrorResumeNext(Flowable.empty()) }
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ repo.onReply(it) },
                         { repo.onError(it) })
     }
 
     private fun Flowable<Any>.thenComplete(f: (RSocket) -> Completable): Disposable {
-        return flatMapCompletable { _ -> rsocket.flatMapCompletable { f(it) } }
+        return flatMapCompletable { _ -> rsocket.flatMapCompletable { f(it) }
+                .doOnError { repo.onError(it) }.onErrorResumeNext { Completable.complete() } }
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ }, { repo.onError(it) })
     }
