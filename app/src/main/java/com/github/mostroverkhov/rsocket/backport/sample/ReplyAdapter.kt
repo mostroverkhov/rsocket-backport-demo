@@ -6,15 +6,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import java.util.*
 
 /**
  * Created by Maksym Ostroverkhov on 30.10.17.
  */
-class ReplyAdapter(private val c: Context) : RecyclerView.Adapter<Holder>() {
-    private val replies: MutableList<String> = mutableListOf()
+class ReplyAdapter(private val c: Context, private val replyLimit: Int) : RecyclerView.Adapter<Holder>() {
+    private val replies: MutableList<String> = LinkedList()
     private var recycler: RecyclerView? = null
     override fun onBindViewHolder(holder: Holder, position: Int) {
-        holder.reply_text.text = replies[position]
+        holder.replyText.text = replies[position]
     }
 
     override fun getItemCount(): Int = replies.size
@@ -30,6 +31,9 @@ class ReplyAdapter(private val c: Context) : RecyclerView.Adapter<Holder>() {
 
     fun newReply(reply: String) {
         replies += reply
+        if (replies.size > replyLimit) {
+            replies.removeAt(0)
+        }
         notifyDataSetChanged()
         recycler?.post {
             recycler?.smoothScrollToPosition(replies.lastIndex)
@@ -38,5 +42,5 @@ class ReplyAdapter(private val c: Context) : RecyclerView.Adapter<Holder>() {
 }
 
 class Holder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    val reply_text = itemView.findViewById<TextView>(R.id.reply_item_view)
+    val replyText: TextView = itemView.findViewById(R.id.reply_item_view)
 }

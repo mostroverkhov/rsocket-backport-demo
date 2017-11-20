@@ -18,9 +18,5 @@ class App : Application() {
 
     companion object {
         lateinit var context: Application
-
-        fun stringRes(@StringRes id: Int): String = context.resources.getString(id)
-
-        fun intRes(@IntegerRes id: Int): Int = context.resources.getInteger(id)
     }
 }
