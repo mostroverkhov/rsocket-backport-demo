@@ -36,7 +36,7 @@ dependencies {
     implementation 'com.android.support:design:26.1.0'
     implementation 'com.jakewharton.rxbinding2:rxbinding:2.0.0'
     implementation"org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
-    implementation 'io.rsocket:rsocket-core:0.9-SNAPSHOT'
+    implementation 'io.rsocket:rsocket-android-core:0.9-SNAPSHOT'
     implementation 'io.rsocket:rsocket-transport-okhttp:0.9-SNAPSHOT'
     // https://mvnrepository.com/artifact/io.reactivex.rxjava2/rxandroid
     implementation group: 'io.reactivex.rxjava2', name: 'rxandroid', version: '2.0.1'
