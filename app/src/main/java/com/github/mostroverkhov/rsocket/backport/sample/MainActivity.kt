@@ -19,7 +19,7 @@ import io.reactivex.processors.PublishProcessor
 import io.rsocket.AbstractRSocket
 import io.rsocket.Payload
 import io.rsocket.RSocket
-import io.rsocket.util.PayloadImpl
+import io.rsocket.android.util.PayloadImpl
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import java.util.concurrent.TimeUnit

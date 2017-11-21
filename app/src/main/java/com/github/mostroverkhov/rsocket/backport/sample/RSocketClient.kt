@@ -1,6 +1,5 @@
 package com.github.mostroverkhov.rsocket.backport.sample
 
-import com.github.mostroverkhov.rsocket.backport.transport.okhttp.client.OkhttpWebsocketClientTransport
 import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.Single
@@ -10,7 +9,8 @@ import io.rsocket.DuplexConnection
 import io.rsocket.Frame
 import io.rsocket.RSocket
 import io.rsocket.RSocketFactory
-import io.rsocket.plugins.DuplexConnectionInterceptor
+import io.rsocket.android.plugins.DuplexConnectionInterceptor
+import io.rsocket.transport.okhttp.client.OkhttpWebsocketClientTransport
 import org.reactivestreams.Publisher
 import java.util.concurrent.atomic.AtomicReference
 
