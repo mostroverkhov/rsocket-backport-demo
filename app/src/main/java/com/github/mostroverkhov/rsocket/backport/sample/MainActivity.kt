@@ -5,7 +5,9 @@ import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.view.View
+import android.widget.CompoundButton
 import com.jakewharton.rxbinding2.view.RxView
+import com.jakewharton.rxbinding2.widget.RxCompoundButton
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Completable
 import io.reactivex.Flowable
@@ -13,18 +15,22 @@ import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import io.reactivex.processors.PublishProcessor
 import io.rsocket.AbstractRSocket
 import io.rsocket.Payload
 import io.rsocket.RSocket
-import io.rsocket.util.PayloadImpl
+import io.rsocket.android.util.PayloadImpl
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var rsocket: Single<RSocket>
     private lateinit var repo: RepliesRepository
+    private lateinit var replyHandler: ReplyHandler
     private val d: CompositeDisposable = CompositeDisposable()
+    private val cancelSignals = PublishProcessor.create<Any>()
 
     override fun onDestroy() {
         d.dispose()
@@ -36,41 +42,43 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        val repliesAdapter = ReplyAdapter(this)
+        val repliesAdapter = ReplyAdapter(this, replyLimit = 40)
         responses_view.adapter = repliesAdapter
         responses_view.layoutManager = LinearLayoutManager(this)
-        val replyHandler = ReplyHandler(repliesAdapter)
+        replyHandler = ReplyHandler(repliesAdapter)
 
         repo = Factory.repo()
         rsocket = Factory.client { clientResponder(repo) }.connect()
 
-        d += whenClicked(req_rep_view).then { it.requestResponse(PayloadImpl("reqrep ping")).toFlowable() }
+        d += click { req_rep_view } starts { it.requestResponse(reqResponseRequest()).toFlowable() }
 
-        d += whenClicked(req_stream_view).then { it.requestStream(PayloadImpl("reqstream ping")) }
+        d += click { req_stream_view } starts { it.requestStream(streamRequest()) }
 
-        d += whenClicked(fnf_view).thenComplete { it.fireAndForget(PayloadImpl("client fnf: ${Date()}")) }
+        d += click { fnf_view } starts { it.fireAndForget(fnfRequest()).toFlowable() }
 
-        d += repo.replies().subscribe({ replyHandler.onReply(it) })
+        d += click { request_channel_view } starts { it.requestChannel(channelRequest()) }
 
-        d += repo.errors().subscribe({ replyHandler.onError(it) })
+        d += click { request_cancel_all } calls { cancelRequests() }
+
+        d += check { print_responses_view } calls { toggleNewRepliesVisibility(it) }
+
+        d += repo.replies() calls { addNewReply(it) }
+
+        d += repo.errors() calls { showReplyError(it) }
     }
 
-    private fun Flowable<Any>.then(f: (RSocket) -> Flowable<Payload>): Disposable {
-        return flatMap { _ -> rsocket.flatMapPublisher { f(it) }
-                .doOnError { repo.onError(it) }.onErrorResumeNext(Flowable.empty()) }
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ repo.onReply(it) },
-                        { repo.onError(it) })
-    }
+    private fun reqResponseRequest() = PayloadImpl("req-rep ping")
 
-    private fun Flowable<Any>.thenComplete(f: (RSocket) -> Completable): Disposable {
-        return flatMapCompletable { _ -> rsocket.flatMapCompletable { f(it) }
-                .doOnError { repo.onError(it) }.onErrorResumeNext { Completable.complete() } }
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ }, { repo.onError(it) })
-    }
+    private fun streamRequest() = PayloadImpl("req-stream ping")
 
+    private fun fnfRequest() = PayloadImpl("client fnf: ${Date()}")
+
+    private fun channelRequest(): Flowable<Payload> =
+            Flowable.interval(2, TimeUnit.MILLISECONDS)
+                    .onBackpressureDrop()
+                    .map { PayloadImpl("req-channel request unbounded") }
 
     private fun clientResponder(replyRepository: RepliesRepository): RSocket {
         return object : AbstractRSocket() {
@@ -82,10 +90,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    inner class ReplyHandler(private val adapter: ReplyAdapter) {
+    private fun showReplyError(it: Throwable) {
+        replyHandler.onError(it)
+    }
+
+    private fun addNewReply(it: String) {
+        replyHandler.onReply(it)
+    }
+
+    private fun toggleNewRepliesVisibility(it: Boolean) {
+        changeNewRepliesVisibility(replyHandler, it)
+    }
+
+    private fun changeNewRepliesVisibility(replyHandler: ReplyHandler, it: Boolean) {
+        replyHandler.onNewRepliesVisibilityChanged(it)
+    }
+
+    private fun cancelRequests() {
+        cancelSignals.onNext(this)
+    }
+
+    private inner class ReplyHandler(private val adapter: ReplyAdapter) {
+        private var counter = 0
+        private var addNewReplies = true
 
         fun onReply(rep: String) {
-            adapter.newReply(rep)
+            counter++
+            counter_view.text = counter.toString()
+            if (addNewReplies) adapter.newReply(rep)
         }
 
         fun onError(err: Throwable) {
@@ -94,12 +126,32 @@ class MainActivity : AppCompatActivity() {
                     .show()
         }
 
+        fun onNewRepliesVisibilityChanged(vis: Boolean) {
+            addNewReplies = vis
+        }
     }
 
-    private fun whenClicked(view: View): Flowable<Any> =
-            RxView.clicks(view).toFlowable(BackpressureStrategy.LATEST)
+    private fun click(view: () -> View): Flowable<Any> =
+            RxView.clicks(view()).toFlowable(BackpressureStrategy.LATEST)
+
+    private fun check(view: () -> CompoundButton): Flowable<Boolean> =
+            RxCompoundButton.checkedChanges(view()).toFlowable(BackpressureStrategy.LATEST)
+
+    private infix fun <T> Flowable<T>.calls(consumer: (T) -> Unit): Disposable = subscribe(consumer)
 
     private operator fun CompositeDisposable.plusAssign(d: Disposable) {
         this.add(d)
     }
+
+    private infix fun Flowable<Any>.starts(f: (RSocket) -> Flowable<Payload>): Disposable =
+            flatMap {
+                rsocket.flatMapPublisher { f(it) }
+                        .doOnError { repo.onError(it) }
+                        .onErrorResumeNext(Flowable.empty())
+                        .takeUntil(cancelSignals)
+            }.observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            { repo.onReply(it) },
+                            { repo.onError(it) })
+
 }

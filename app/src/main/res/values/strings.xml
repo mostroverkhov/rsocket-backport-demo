@@ -1,8 +1,12 @@
 <resources>
     <string name="app_name">rsocket-java-backport-sample</string>
     <string name="action_settings">Settings</string>
-    <string name="request_response">Request-response</string>
-    <string name="request_stream">request-stream</string>
+    <string name="request_response">request response</string>
+    <string name="request_stream">request stream</string>
     <string name="fire_and_forget">fire and forget</string>
     <string name="metadata_push">metadata push</string>
+    <string name="request_channel">request channel</string>
+    <string name="req_ch_unbounded">req-channel unbounded</string>
+    <string name="show_new_replies">show new replies</string>
+    <string name="cancel">cancel</string>
 </resources>

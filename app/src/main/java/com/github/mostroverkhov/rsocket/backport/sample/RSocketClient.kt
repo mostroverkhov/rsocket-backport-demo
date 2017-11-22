@@ -1,6 +1,5 @@
 package com.github.mostroverkhov.rsocket.backport.sample
 
-import com.github.mostroverkhov.rsocket.backport.transport.okhttp.client.OkhttpWebsocketClientTransport
 import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.Single
@@ -10,7 +9,8 @@ import io.rsocket.DuplexConnection
 import io.rsocket.Frame
 import io.rsocket.RSocket
 import io.rsocket.RSocketFactory
-import io.rsocket.plugins.DuplexConnectionInterceptor
+import io.rsocket.android.plugins.DuplexConnectionInterceptor
+import io.rsocket.transport.okhttp.client.OkhttpWebsocketClientTransport
 import org.reactivestreams.Publisher
 import java.util.concurrent.atomic.AtomicReference
 
@@ -21,8 +21,8 @@ class RSocketClient(protocol: String,
                     host: String,
                     port: Int,
                     responder: (RSocket) -> RSocket) {
-    private val tryRSocket: AtomicReference<AsyncProcessor<RSocket>> = AtomicReference()
-    private val rSocket: Single<RSocket> = RSocketFactory
+    private val cachedRSocket: AtomicReference<AsyncProcessor<RSocket>> = AtomicReference()
+    private val rSocketSupplier: Single<RSocket> = RSocketFactory
             .connect()
             .addConnectionPlugin(SourceConnectionInterceptor { ResetRSocketOnError(it) })
             .acceptor { -> responder }
@@ -31,41 +31,34 @@ class RSocketClient(protocol: String,
             .start()
 
     fun connect(): Single<RSocket> = Single.defer {
-        val succ = tryRSocket
+        val notCached = cachedRSocket
                 .compareAndSet(null,
-                        AsyncProcessor.create<RSocket>())
-        if (succ) {
-            memoizeSuccess()
-        } else {
-            tryRSocket.get().firstOrError()
+                        AsyncProcessor.create())
+        val rSocket = cachedRSocket.get()
+        if (notCached) {
+            rSocketSupplier.subscribe(
+                    { rs ->
+                        rSocket.onNext(rs)
+                        rSocket.onComplete()
+                    },
+                    { err ->
+                        rSocket.onError(err)
+                        cachedRSocket.set(null)
+                    })
         }
+        rSocket.firstOrError()
     }.subscribeOn(Schedulers.io())
-
-    private fun memoizeSuccess(): Single<RSocket> {
-        val rSocket = tryRSocket.get()
-        this.rSocket.subscribe(
-                { rs ->
-                    rSocket.onNext(rs)
-                    rSocket.onComplete()
-                },
-                { err ->
-                    rSocket.onError(err)
-                    tryRSocket.set(null)
-                })
-        return rSocket.firstOrError()
-    }
 
     private inner class ResetRSocketOnError(private val conn: DuplexConnection) : DuplexConnection {
         override fun close(): Completable = conn.close()
 
-        override fun availability(): Double = conn.availability()
+        override fun availability() = conn.availability()
 
-        override fun onClose(): Completable = conn.onClose()
+        override fun onClose() = conn.onClose()
 
-        override fun receive(): Flowable<Frame> = conn.receive().doOnError { _ -> tryRSocket.set(null) }
+        override fun receive(): Flowable<Frame> = conn.receive().doOnError { _ -> cachedRSocket.set(null) }
 
-        override fun send(frame: Publisher<Frame>): Completable = conn.send(frame).doOnError { tryRSocket.set(null) }
-
+        override fun send(frame: Publisher<Frame>): Completable = conn.send(frame).doOnError { cachedRSocket.set(null) }
     }
 
     private class SourceConnectionInterceptor(

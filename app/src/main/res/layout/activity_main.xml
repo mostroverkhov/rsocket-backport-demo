@@ -17,7 +17,33 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
+            app:popupTheme="@style/AppTheme.PopupOverlay" >
+
+            <CheckBox
+                android:id="@+id/print_responses_view"
+                android:checked="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:padding="4dp"
+                android:text="@string/show_new_replies"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"/>
+
+            <TextView
+                android:id="@+id/counter_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity = "right"
+                android:padding="8dp"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                tools:text="42" />
+
+        </android.support.v7.widget.Toolbar>
 
     </android.support.design.widget.AppBarLayout>
 
@@ -25,36 +51,49 @@
         android:id="@+id/responses_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="80dp"
-        android:layout_below="@id/app_bar_layout"/>
+        android:layout_below="@id/app_bar_layout"
+        android:layout_marginBottom="140dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="120dp"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="20dp">
 
         <Button
             android:id="@+id/req_rep_view"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/request_response" />
 
         <Button
             android:id="@+id/req_stream_view"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/request_stream" />
 
         <Button
             android:id="@+id/fnf_view"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/fire_and_forget" />
 
+        <Button
+            android:id="@+id/request_channel_view"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="@string/request_channel" />
+
+        <Button
+            android:id="@+id/request_cancel_all"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="@string/cancel" />
 
     </LinearLayout>
 </RelativeLayout>
