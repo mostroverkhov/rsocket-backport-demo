@@ -16,9 +16,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.processors.PublishProcessor
-import io.rsocket.AbstractRSocket
-import io.rsocket.Payload
-import io.rsocket.RSocket
+import io.rsocket.android.AbstractRSocket
+import io.rsocket.android.Payload
+import io.rsocket.android.RSocket
 import io.rsocket.android.util.PayloadImpl
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*

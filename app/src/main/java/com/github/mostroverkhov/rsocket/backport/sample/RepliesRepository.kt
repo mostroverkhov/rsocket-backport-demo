@@ -4,7 +4,7 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.processors.ReplayProcessor
-import io.rsocket.Payload
+import io.rsocket.android.Payload
 
 /**
  * Created by Maksym Ostroverkhov

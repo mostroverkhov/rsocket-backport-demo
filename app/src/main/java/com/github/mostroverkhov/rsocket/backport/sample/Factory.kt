@@ -2,7 +2,7 @@ package com.github.mostroverkhov.rsocket.backport.sample
 
 import android.support.annotation.IntegerRes
 import android.support.annotation.StringRes
-import io.rsocket.RSocket
+import io.rsocket.android.RSocket
 
 /**
  * Created by Maksym Ostroverkhov

@@ -5,10 +5,10 @@ import io.reactivex.Flowable
 import io.reactivex.Single
 import io.reactivex.processors.AsyncProcessor
 import io.reactivex.schedulers.Schedulers
-import io.rsocket.DuplexConnection
-import io.rsocket.Frame
-import io.rsocket.RSocket
-import io.rsocket.RSocketFactory
+import io.rsocket.android.DuplexConnection
+import io.rsocket.android.Frame
+import io.rsocket.android.RSocket
+import io.rsocket.android.RSocketFactory
 import io.rsocket.android.plugins.DuplexConnectionInterceptor
 import io.rsocket.transport.okhttp.client.OkhttpWebsocketClientTransport
 import org.reactivestreams.Publisher
