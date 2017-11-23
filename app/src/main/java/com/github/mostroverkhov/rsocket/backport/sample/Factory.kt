@@ -13,11 +13,11 @@ class Factory {
         fun client(responder: (RSocket) -> RSocket): RSocketClient {
             return synchronized(this) {
                 if (rSocketClient == null) {
-                    val protocol = stringRes(R.string.rs_protocol)
-                    val host = stringRes(R.string.rs_host)
-                    val port = intRes(R.integer.rs_port)
+                    val scheme = stringRes(R.string.ws_scheme)
+                    val host = stringRes(R.string.ws_host)
+                    val port = intRes(R.integer.ws_port)
                     rSocketClient = RSocketClient(
-                            protocol = protocol,
+                            scheme = scheme,
                             host = host,
                             port = port,
                             responder = responder)

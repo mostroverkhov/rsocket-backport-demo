@@ -11,13 +11,14 @@ import io.rsocket.android.RSocket
 import io.rsocket.android.RSocketFactory
 import io.rsocket.android.plugins.DuplexConnectionInterceptor
 import io.rsocket.transport.okhttp.client.OkhttpWebsocketClientTransport
+import okhttp3.HttpUrl
 import org.reactivestreams.Publisher
 import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Created by Maksym Ostroverkhov
  */
-class RSocketClient(protocol: String,
+class RSocketClient(scheme: String,
                     host: String,
                     port: Int,
                     responder: (RSocket) -> RSocket) {
@@ -26,8 +27,7 @@ class RSocketClient(protocol: String,
             .connect()
             .addConnectionPlugin(SourceConnectionInterceptor { ResetRSocketOnError(it) })
             .acceptor { -> responder }
-            .transport(OkhttpWebsocketClientTransport
-                    .create(protocol, host, port))
+            .transport(OkhttpWebsocketClientTransport.create(request(scheme, host, port)))
             .start()
 
     fun connect(): Single<RSocket> = Single.defer {
@@ -49,16 +49,27 @@ class RSocketClient(protocol: String,
         rSocket.firstOrError()
     }.subscribeOn(Schedulers.io())
 
+
+    private fun request(scheme: String,
+                        host: String,
+                        port: Int): HttpUrl {
+        return HttpUrl.Builder()
+                .scheme(scheme)
+                .host(host)
+                .port(port)
+                .build()
+    }
+
     private inner class ResetRSocketOnError(private val conn: DuplexConnection) : DuplexConnection {
         override fun close(): Completable = conn.close()
 
         override fun availability() = conn.availability()
 
-        override fun onClose() = conn.onClose()
+        override fun onClose(): Completable = conn.onClose().doOnComplete { cachedRSocket.set(null) }
 
-        override fun receive(): Flowable<Frame> = conn.receive().doOnError { _ -> cachedRSocket.set(null) }
+        override fun receive(): Flowable<Frame> = conn.receive()
 
-        override fun send(frame: Publisher<Frame>): Completable = conn.send(frame).doOnError { cachedRSocket.set(null) }
+        override fun send(frame: Publisher<Frame>): Completable = conn.send(frame)
     }
 
     private class SourceConnectionInterceptor(
