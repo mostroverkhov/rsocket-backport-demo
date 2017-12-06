@@ -83,9 +83,8 @@ class MainActivity : AppCompatActivity() {
     private fun clientResponder(replyRepository: RepliesRepository): RSocket {
         return object : AbstractRSocket() {
             override fun fireAndForget(payload: Payload): Completable {
-                return Completable.complete()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .doOnComplete { replyRepository.onReply(payload) }
+                return Completable.fromAction { replyRepository.onReply(payload) }
+                        .subscribeOn(AndroidSchedulers.mainThread())
             }
         }
     }
